@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -7,7 +8,7 @@ import { BotanicSchedulerService } from './botanic-scheduler/botanic-scheduler.s
 
 @Module({
   imports: [
-    // MongooseModule.forRoot('mongodb://localhost/botanic'),
+    MongooseModule.forRoot('mongodb://localhost:27017/botanic'),
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
