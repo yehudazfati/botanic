@@ -17,6 +17,8 @@ export class RawErrors {
 	@Prop()
 	LastPage: string;
 	@Prop()
+	Tenant: string;
+	@Prop()
 	NumSessions: string;
 	@Prop()
 	LastSessionTime: string;
@@ -62,6 +64,8 @@ export class RawErrors {
 	EventType: string;
 	@Prop()
 	EventTargetText: string;
+	@Prop()
+	EventTargetFinal: string;
 	@Prop()
 	PageUrl: string;
 	@Prop()
