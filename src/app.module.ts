@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BotanicSchedulerService } from './botanic-scheduler/botanic-scheduler.service';
 import { ExtractRawDataModule } from './extract-raw-data/extract-raw-data.module';
+import { EventsGateway } from './gateway';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { ExtractRawDataModule } from './extract-raw-data/extract-raw-data.module
     ExtractRawDataModule
   ],
   controllers: [AppController],
-  providers: [AppService, BotanicSchedulerService],
+  providers: [AppService, BotanicSchedulerService, EventsGateway],
 })
 export class AppModule {}
