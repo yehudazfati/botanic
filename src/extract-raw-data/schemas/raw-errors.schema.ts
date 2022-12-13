@@ -52,6 +52,8 @@ export class RawErrors {
 	@Prop()
 	LastMatchingLatLong: string;
 	@Prop()
+	LastMatchingSessionLink: string;
+	@Prop()
 	IndvId: number;
 	@Prop()
 	UserId: number;
