@@ -3,6 +3,7 @@ import { Controller, Get } from '@nestjs/common';
 import { CreateWorkItemService } from './create-work-item/create-work-item.service';
 import { ExtractRowDataService } from './extract-raw-data/extract-raw-data.service';
 import { ErrorDataService } from "./aggregate-raw-data/error-data.service";
+import { IAggregatedErrorData } from './interfaces/botanic.interfaces';
 
 @Controller()
 export class AppController {
@@ -15,13 +16,13 @@ export class AppController {
 	@Get()
 	getHello(): void {
     	// Extract data from Full Story and save it to raw_errors table
-    	this.extractService.process();
-
-		//  here we need to fetch aggregated data from Mongo
-		// uncomment those when performing DB integration.
-
-		/*const parsedData = this.createWorkItemService.parseAggregatedDataToWotkItemModel();
-		this.createWorkItemService.createWorkItem(parsedData).subscribe();*/
+    	this.extractService.process().then(() => {
+			this.extractService.errorData.then((data) => {
+				const arr = data as unknown as IAggregatedErrorData[];
+				
+				this.createWorkItemService.createWorkItems(arr.slice(0, 1));
+			});
+		})
 	}
 
 	@Get('aggregate')

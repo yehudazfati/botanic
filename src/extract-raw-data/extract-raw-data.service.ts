@@ -19,40 +19,46 @@ export class ExtractRowDataService {
 	constructor(@InjectModel('raw_errors') private readonly rawErrorsModel: Model<RawErrorsDocument>) {}
 
 	public process() {
-		// Clean raw_errors collection before loading
-		this.cleanDb().then(() => {
-			// Start process Raw data
-			this.logger.debug(`**********`);
-			this.logger.debug(`Extract Raw data from FullStory started`);
-			const csvUserFile = readFileSync(this.dirRawData + this.usersListFile, 'utf-8');
-			this.logger.debug(`FullStory users list arrived`);
+		return new Promise((resolve) => {
+			// Clean raw_errors collection before loading
+			this.cleanDb().then(() => {
+				// Start process Raw data
+				this.logger.debug(`**********`);
+				this.logger.debug(`Extract Raw data from FullStory started`);
+				const csvUserFile = readFileSync(this.dirRawData + this.usersListFile, 'utf-8');
+				this.logger.debug(`FullStory users list arrived`);
 
-			parse(csvUserFile, {
-				header: true,
-				complete: results => {
-					results.data.forEach((userData: IUserData) => {
-						this.getUserErrors(userData, this.eventType).then((userErrors: IUserError[]) => {
-							this.logger.debug('Found ' + userErrors.length + ' of "' + this.eventType + '" for user: ' + userData.Name);
+				parse(csvUserFile, {
+					header: true,
+					complete: results => {
+						results.data.forEach((userData: IUserData) => {
+							this.getUserErrors(userData, this.eventType).then((userErrors: IUserError[]) => {
+								this.logger.debug('Found ' + userErrors.length + ' of "' + this.eventType + '" for user: ' + userData.Name);
 
-							const rowData: IRawData[] = this.getCombinedRawData(userData, userErrors);
+								const rowData: IRawData[] = this.getCombinedRawData(userData, userErrors);
 
-							this.addToDb(rowData).then(() => {
-								this.logger.debug(
-									'Added to database ' + rowData.length + ' "' + this.eventType + '" of user: ' + userData.Name
-								);
+								this.addToDb(rowData).then(() => {
+									this.logger.debug(
+										'Added to database ' + rowData.length + ' "' + this.eventType + '" of user: ' + userData.Name
+									);
 
-								if (this.counter === results.data.length - 1) {
-									this.logger.debug(`Extract Raw data from FullStory completed`);
-									this.logger.debug(`**********`);
-								}
+									this.counter++;
 
-								this.counter++;
+									if (this.counter === results.data.length) {
+										this.logger.debug(`Extract Raw data from FullStory completed`);
+										this.logger.debug(`**********`);
+										resolve(true);
+										this.counter = 0
+									}
+
+								});
 							});
 						});
-					});
-				},
+					},
+				});
 			});
-		});
+		})
+		
 	}
 
 	private async getUserErrors(userData: IUserData, eventType: string): Promise<IUserError[]> {
@@ -99,8 +105,10 @@ export class ExtractRowDataService {
 					$group: {
 
 						_id: { EventTargetFinal: "$EventTargetFinal" },
-						Tenants: { $push: '$Tenant' },
-						SessionId: { $push: '$SessionId' },
+						Tenants: { $addToSet: '$Tenant' },
+						SessionId: { $addToSet: '$SessionId' },
+						LastMatchingSessionLink: {$addToSet: '$LastMatchingSessionLink'},
+						LastPage: {$addToSet: '$LastPage'},
 						count: { $sum: 1 }
 
 					}
@@ -113,6 +121,8 @@ export class ExtractRowDataService {
 							count: { $last: '$count' },
 							SessionId: { $last: '$SessionId' },
 							Tenants: { $last: '$Tenants' },
+							LastPage: {$last: '$LastPage'},
+							LastMatchingSessionLink: {$last: '$LastMatchingSessionLink'}
 						}
 				},
 				{
@@ -121,6 +131,8 @@ export class ExtractRowDataService {
 						tenants: '$Tenants',
 						sessionsCount: { $size: "$SessionId" },
 						tenantsCount: { $size: "$Tenants" },
+						LastMatchingSessionLink: '$LastMatchingSessionLink',
+						LastPage: '$LastPage',
 					}
 				}
 			]

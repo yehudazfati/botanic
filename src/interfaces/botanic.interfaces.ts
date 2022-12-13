@@ -1,3 +1,5 @@
+import { ErrorData } from "src/aggregate-raw-data/schemas/error-data.schema";
+
 /* eslint-disable prettier/prettier */
 export interface IUserData {
 	Created: string;
@@ -50,6 +52,12 @@ export interface IUserError {
 	PageLatLong: string;
 	PageDuration: number;
 	PageActiveDuration: number;
+}
+
+export interface IAggregatedErrorData extends ErrorData {
+	_id: string;
+	LastMatchingSessionLink: string[];
+	LastPage: string[];
 }
 
 export type IRawData = IUserData & IUserError; 
