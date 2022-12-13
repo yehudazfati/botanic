@@ -31,7 +31,9 @@ export interface IUserError {
 	EventStart: string;
 	EventType: string;
 	EventTargetText: string;
+	EventTargetFinal: string;
 	PageUrl: string;
+	Tenant: string;
 	PageRefererUrl: string;
 	PageIp: string;
 	PageAgent: string;

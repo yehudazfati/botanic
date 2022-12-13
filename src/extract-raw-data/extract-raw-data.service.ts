@@ -10,7 +10,7 @@ import { RawErrors, RawErrorsDocument } from './schemas/raw-errors.schema';
 @Injectable()
 export class ExtractRowDataService {
 	private readonly logger = new Logger(ExtractRowDataService.name);
-	private readonly dirRawData = __dirname + '/../../../raw-data/';
+	private readonly dirRawData = __dirname + '/../../raw-data/';
 	private readonly usersListFile = 'Users_2022-12-10_2022-12-12.csv';
 	private readonly eventType = 'console_message';
 	private counter = 0;
@@ -20,8 +20,7 @@ export class ExtractRowDataService {
 	public process() {
 		// Clean raw_errors collection before loading
 		this.cleanDb().then(() => {
-
-            // Start process Raw data
+			// Start process Raw data
 			this.logger.debug(`**********`);
 			this.logger.debug(`Extract Raw data from FullStory started`);
 			const csvUserFile = readFileSync(this.dirRawData + this.usersListFile, 'utf-8');
@@ -35,7 +34,7 @@ export class ExtractRowDataService {
 							this.logger.debug('Found ' + userErrors.length + ' of "' + this.eventType + '" for user: ' + userData.Name);
 
 							const rowData: IRawData[] = this.getCombinedRawData(userData, userErrors);
-							
+
 							this.addToDb(rowData).then(() => {
 								this.logger.debug(
 									'Added to database ' + rowData.length + ' "' + this.eventType + '" of user: ' + userData.Name
@@ -64,7 +63,24 @@ export class ExtractRowDataService {
 	}
 
 	private getCombinedRawData(userData: IUserData, userErrors: IUserError[]): IRawData[] {
-		return userErrors.map((error: IUserError) => ({ ...userData, ...error })) as unknown[] as IRawData[];
+		return userErrors.map((error: IUserError) => {
+			error = {...error, 
+				Tenant: this.getTenant(error.PageUrl),
+				EventTargetFinal: this.cleanErrorMessage(error.EventTargetText)
+			};
+						
+			return { ...userData, ...error };
+		}) as unknown[] as IRawData[];
+	}
+
+	private cleanErrorMessage(err: string): string {
+		return err.replace(/(?:https?|ftp):\/\/[\n\S]+/g, '');
+	}
+
+	private getTenant(urlFull: string): string {
+		const url:URL  = new URL(urlFull);
+		return url.hostname.replace('.varonis.io', '');
+
 	}
 
 	private async addToDb(addData): Promise<RawErrors> {
