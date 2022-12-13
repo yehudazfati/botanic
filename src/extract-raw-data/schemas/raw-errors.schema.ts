@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { ErrorDataSchema } from "../../aggregate-raw-data/schemas/error-data.schema";
 
 export type RawErrorsDocument = HydratedDocument<RawErrors>;
 
@@ -101,3 +102,12 @@ export class RawErrors {
 }
 
 export const RawErrorsSchema = SchemaFactory.createForClass(RawErrors);
+// RawErrorsSchema.aggregate([
+// 	{
+// 		$group: {
+// 			// Each `_id` must be unique, so if there are multiple
+// 			// documents with the same age, MongoDB will increment `count`.
+// 			_id: '$'
+// 		}
+// 	}
+// ])

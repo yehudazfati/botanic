@@ -2,10 +2,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { promises, readFileSync } from 'fs';
-import { Model } from 'mongoose';
+import { Aggregate, Model } from 'mongoose';
 import { parse } from 'papaparse';
 import { IRawData, IUserData, IUserError } from 'src/interfaces/botanic.interfaces';
 import { RawErrors, RawErrorsDocument } from './schemas/raw-errors.schema';
+import { ErrorDataDocument } from "../aggregate-raw-data/schemas/error-data.schema";
 
 @Injectable()
 export class ExtractRowDataService {
@@ -64,11 +65,11 @@ export class ExtractRowDataService {
 
 	private getCombinedRawData(userData: IUserData, userErrors: IUserError[]): IRawData[] {
 		return userErrors.map((error: IUserError) => {
-			error = {...error, 
+			error = {...error,
 				Tenant: this.getTenant(error.PageUrl),
 				EventTargetFinal: this.cleanErrorMessage(error.EventTargetText)
 			};
-						
+
 			return { ...userData, ...error };
 		}) as unknown[] as IRawData[];
 	}
@@ -89,5 +90,40 @@ export class ExtractRowDataService {
 
 	private async cleanDb(): Promise<unknown> {
 		return await this.rawErrorsModel.deleteMany({});
+	}
+
+	public get errorData(): Aggregate<Array<ErrorDataDocument>> {
+		return this.rawErrorsModel.aggregate(
+			[
+				{
+					$group: {
+
+						_id: { EventTargetFinal: "$EventTargetFinal" },
+						Tenants: { $push: '$Tenant' },
+						SessionId: { $push: '$SessionId' },
+						count: { $sum: 1 }
+
+					}
+				},
+
+				{
+					$group:
+						{
+							_id: "$_id.EventTargetFinal",
+							count: { $last: '$count' },
+							SessionId: { $last: '$SessionId' },
+							Tenants: { $last: '$Tenants' },
+						}
+				},
+				{
+					$project: {
+						count: '$count',
+						tenants: '$Tenants',
+						sessionsCount: { $size: "$SessionId" },
+						tenantsCount: { $size: "$Tenants" },
+					}
+				}
+			]
+		)
 	}
 }
