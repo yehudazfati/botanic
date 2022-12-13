@@ -21,6 +21,7 @@ export interface IUserData {
 	NumEvents: string;
 	LastMatchingIp: string;
 	LastMatchingLatLong: string;	
+	LastMatchingSessionLink: string;
 }
 
 export interface IUserError {
