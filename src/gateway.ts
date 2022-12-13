@@ -29,6 +29,7 @@
 //     }
 // }
 
+import { Logger } from '@nestjs/common';
 import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 
 @WebSocketGateway(81, {
@@ -39,6 +40,8 @@ import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGa
     },
 })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    private readonly logger = new Logger(EventsGateway.name);
+
 	@WebSocketServer()
 	server;
 	users = 0;
@@ -49,10 +52,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 		// Notify connected clients of current users
 		this.server.emit('events', this.users);
-		console.log(this.users);
+		this.logger.debug(this.users);
 	}
 
 	async handleDisconnect() {
+        this.logger.debug('handleDisconnect');
 		// A client has disconnected
 		this.users--;
 
@@ -60,8 +64,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 		this.server.emit('events', this.users);
 	}
 
-	@SubscribeMessage('chat')
-	async onChat(client, message) {
-		client.broadcast.emit('chat', message);
+	@SubscribeMessage('events')
+	async onEvents(client, message) {
+		client.broadcast.emit('events', message);
 	}
 }
