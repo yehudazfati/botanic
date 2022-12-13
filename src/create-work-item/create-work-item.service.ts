@@ -27,7 +27,7 @@ export class CreateWorkItemService {
                 // title section in TFS
                 op: Operation.Add,
                 path: '/fields/System.Title',
-                value: 'bug from customer panic'
+                value: '[TenentID][Cloud Incident][Critical] - bug from customer panic'
             }
         ];
     }
@@ -86,6 +86,16 @@ export class CreateWorkItemService {
                         op: Operation.Add,
                         path: `/fields/${key}`,
                         value: `New`
+                    });
+        
+                    return fields;
+                }
+
+                if (key === 'System.Microsoft.VSTS.Common.Severity') {
+                    fields.push({
+                        op: Operation.Add,
+                        path: `/fields/${key}`,
+                        value: `Critical`
                     });
         
                     return fields;
