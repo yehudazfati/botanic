@@ -19,16 +19,10 @@ export class AppController {
     	this.extractService.process().then(() => {
 			this.extractService.errorData.then((data) => {
 				const arr = data as unknown as IAggregatedErrorData[];
+				
 				this.createWorkItemService.createWorkItems(arr.slice(0, 1));
 			});
 		})
-
-		//  here we need to fetch aggregated data from Mongo
-		// uncomment those when performing DB integration.
-
-		/*const parsedData = this.createWorkItemService.parseAggregatedDataToWotkItemModel();
-		this.createWorkItemService.createWorkItem(parsedData).subscribe();*/
-		
 	}
 
 	@Get('aggregate')

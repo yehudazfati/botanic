@@ -42,13 +42,15 @@ export class ExtractRowDataService {
 										'Added to database ' + rowData.length + ' "' + this.eventType + '" of user: ' + userData.Name
 									);
 
-									if (this.counter === results.data.length - 1) {
+									this.counter++;
+
+									if (this.counter === results.data.length) {
 										this.logger.debug(`Extract Raw data from FullStory completed`);
 										this.logger.debug(`**********`);
 										resolve(true);
+										this.counter = 0
 									}
 
-									this.counter++;
 								});
 							});
 						});
