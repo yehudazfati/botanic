@@ -5,6 +5,7 @@ import { WorkItem, WorkItemExpand } from 'azure-devops-node-api/interfaces/WorkI
 import { from, map, mergeMap, Observable, switchMap, tap } from 'rxjs';
 import * as azdev from "azure-devops-node-api";
 import { IWorkItemTrackingApi } from 'azure-devops-node-api/WorkItemTrackingApi';
+import { IAggregatedErrorData } from 'src/interfaces/botanic.interfaces';
 
 
 @Injectable()
@@ -14,22 +15,43 @@ export class CreateWorkItemService {
     private readonly WORK_ITEM_TEMPLATE_ID = 1421407;
     private readonly logger = new Logger(CreateWorkItemService.name);
     private tfsConnection: azdev.WebApi;
+    private itemsOfLastExecute: number[];
 
-	public parseAggregatedDataToWotkItemModel(): JsonPatchOperation[] {
+	public parseAggregatedDataToWotkItemModel(item: IAggregatedErrorData): JsonPatchOperation[] {
         return [
             {
                 // description section in TFS
                 op: Operation.Add,
                 path: '/fields/Microsoft.VSTS.TCM.ReproSteps',
-                value: 'very serious Hackathon bug!'
+                value: `<b>Following error happened ${item.count} times: </b>
+                <br>'${item._id}'.
+                
+                <br><br> <b>Affected Tenents:</b>
+                <br> ${item.tenants.map(x => `${x}<br>`).join(', ')}
+                
+                <br><br> 
+                <b>Full-Story session links:</b>
+                <br> ${item.LastMatchingSessionLink.map(x => `<a href='${x}'>${x}</a><br>`).join(', ')}
+                
+                <br><br>
+                <b>The above errors ocurred when the user visited the following pages:</b>
+                <br> ${item.LastPage.join(', ')}
+                `
             },
             {
                 // title section in TFS
                 op: Operation.Add,
                 path: '/fields/System.Title',
-                value: '[TenentID][Cloud Incident][Critical] - bug from customer panic'
+                value: `[Bot(p)anic][Cloud Incident] - ${item._id.slice(0, 40)}...`
             }
         ];
+    }
+
+    public createWorkItems(items: IAggregatedErrorData[]) {
+        const parsedItems = items.map(i => this.parseAggregatedDataToWotkItemModel(i));
+
+        //this.changeTagOfLastSessionWorkItemsToOld();
+        parsedItems.forEach(x => this.createWorkItem(x).subscribe());
     }
 
     public createWorkItem(workItemData: JsonPatchOperation[]): Observable<WorkItem> {
@@ -60,7 +82,8 @@ export class CreateWorkItemService {
                     WorkItemExpand.None
                 ));
             }),
-            tap(createdWorkItem => this.logger.debug(`Work Item was created successfully! ID=${createdWorkItem.id}`))
+            tap(createdWorkItem => this.logger.debug(`Work Item was created successfully! ID=${createdWorkItem.id}`)),
+            //tap(createdWorkItem => this.itemsOfLastExecute.push(createdWorkItem.id))
         );
         
     }
