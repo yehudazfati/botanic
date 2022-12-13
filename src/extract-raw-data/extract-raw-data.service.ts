@@ -10,7 +10,7 @@ import { RawErrors, RawErrorsDocument } from './schemas/raw-errors.schema';
 @Injectable()
 export class ExtractRowDataService {
 	private readonly logger = new Logger(ExtractRowDataService.name);
-	private readonly dirRawData = __dirname + '/../../raw-data/';
+	private readonly dirRawData = __dirname + '/../../../raw-data/';
 	private readonly usersListFile = 'Users_2022-12-10_2022-12-12.csv';
 	private readonly eventType = 'console_message';
 	private counter = 0;
